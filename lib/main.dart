@@ -1,115 +1,437 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:profile_screen/theme.dart';
 
 void main() {
   runApp(const MyApp());
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  bool themeMode = true;
+  Locale _locale = const Locale('en');
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      localizationsDelegates: const [
+        AppLocalizations.delegate, // Add this line
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [
+        Locale('en'), // English
+        Locale('fa'), // Farsi
+      ],
+      locale: _locale,
       title: 'Flutter Demo',
-      theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // Try running your application with "flutter run". You'll see the
-        // application has a blue toolbar. Then, without quitting the app, try
-        // changing the primarySwatch below to Colors.green and then invoke
-        // "hot reload" (press "r" in the console where you ran "flutter run",
-        // or simply save your changes to "hot reload" in a Flutter IDE).
-        // Notice that the counter didn't reset back to zero; the application
-        // is not restarted.
-        primarySwatch: Colors.blue,
-      ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      theme: themeMode
+          ? MyConfigThemeData.dark().themeData(_locale.languageCode)
+          : MyConfigThemeData.light().themeData(_locale.languageCode),
+      home: ProfileScreen(selectedLanguageByUser: (Language newLanguageByUser) {
+        setState(() {
+          _locale = newLanguageByUser == Language.en
+              ? const Locale('en')
+              : const Locale('fa');
+        });
+      }, toggleTheme: () {
+        setState(() {
+          themeMode = !themeMode;
+        });
+      }),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
 
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
 
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
+class ProfileScreen extends StatefulWidget {
+  final Function() toggleTheme;
+  final Function(Language) selectedLanguageByUser;
 
-  final String title;
+  const ProfileScreen(
+      {super.key,
+      required this.toggleTheme,
+      required this.selectedLanguageByUser});
 
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  State<ProfileScreen> createState() => _ProfileScreenState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
+class _ProfileScreenState extends State<ProfileScreen> {
+  SkillType _skillType = SkillType.photoshop;
+  bool isLiked = false;
+  Language _language = Language.en;
 
-  void _incrementCounter() {
+  void updateSkillType(SkillType skill) {
     setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
+      _skillType = skill;
+    });
+  }
+
+  void updateSelectedLanguage(Language language) {
+    widget.selectedLanguageByUser(language);
+    setState(() {
+      {
+        _language = language;
+      }
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
-    return Scaffold(
-      appBar: AppBar(
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
-      ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Invoke "debug painting" (press "p" in the console, choose the
-          // "Toggle Debug Paint" action from the Flutter Inspector in Android
-          // Studio, or the "Toggle Debug Paint" command in Visual Studio Code)
-          // to see the wireframe for each widget.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text(
-              'You have pushed the button this many times:',
+    AppLocalizations appLocalization = AppLocalizations.of(context)!;
+    bool showCursor = false;
+    return GestureDetector(
+      onTap: () {
+        FocusScopeNode currentFocus = FocusScope.of(context);
+        if (!currentFocus.hasPrimaryFocus) {
+          currentFocus.unfocus();
+        }
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(appLocalization.profileTitle),
+          actions: [
+            InkWell(
+              onTap: widget.toggleTheme,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(8, 0, 8, 0),
+                child: Theme.of(context).brightness == Brightness.dark
+                    ? const Icon(
+                        Icons.sunny,
+                        color: Colors.white,
+                      )
+                    : const Icon(
+                        CupertinoIcons.moon_stars_fill,
+                        color: Colors.black,
+                      ),
+              ),
             ),
+          ],
+        ),
+        body: SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(32),
+                child: Row(
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Image.asset(
+                        'assets/images/profile_image.png',
+                        width: 60,
+                        height: 60,
+                      ),
+                    ),
+                    const SizedBox(width: 20),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            appLocalization.name,
+                            style: Theme.of(context).textTheme.bodyMedium,
+                          ),
+                          const SizedBox(height: 3),
+                          Text(
+                            appLocalization.job,
+                            style: Theme.of(context).textTheme.bodySmall,
+                          ),
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.location_on_outlined,
+                                size: 15,
+                                color: Theme.of(context)
+                                    .textTheme
+                                    .bodySmall!
+                                    .color,
+                              ),
+                              Text(
+                                appLocalization.location,
+                                style: Theme.of(context).textTheme.bodySmall,
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      enableFeedback: false,
+                      splashColor: Colors.transparent,
+                      onPressed: () {
+                        setState(() {
+                          isLiked = !isLiked;
+                        });
+                      },
+                      icon: Icon(
+                        isLiked
+                            ? CupertinoIcons.heart_fill
+                            : CupertinoIcons.heart,
+                        color: Colors.red.shade900,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(32, 0, 32, 0),
+                child: Text(
+                  appLocalization.summary,
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ),
+              const Divider(),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(32, 0, 32, 00),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      appLocalization.selectedLanguage,
+                      style: Theme.of(context).textTheme.bodyLarge,
+                    ),
+                    CupertinoSlidingSegmentedControl<Language>(
+                      thumbColor: Theme.of(context).primaryColor,
+                      groupValue: _language,
+                      children: {
+                        Language.en: Text(
+                          appLocalization.enLanguage,
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodyMedium!
+                              .copyWith(fontWeight: FontWeight.w100),
+                        ),
+                        Language.fa: Text(
+                          appLocalization.faLanguage,
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodyMedium!
+                              .copyWith(fontWeight: FontWeight.w100),
+                        ),
+                      },
+                      onValueChanged: (value) =>
+                          {if (value != null) updateSelectedLanguage(value)},
+                    ),
+                  ],
+                ),
+              ),
+              const Divider(),
+              Padding(
+                padding: const EdgeInsets.only(left: 32, bottom: 16, right: 32),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Text(
+                      appLocalization.skills,
+                      style: Theme.of(context).textTheme.bodyLarge,
+                    ),
+                  ],
+                ),
+              ),
+              Center(
+                child: Wrap(
+                  direction: Axis.horizontal,
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    ItemSkills(
+                      imageAddress: 'assets/images/app_icon_01.png',
+                      skillName: 'Photoshop',
+                      shadowColor: Colors.indigo.shade800,
+                      isActive: _skillType == SkillType.photoshop,
+                      onTap: () {
+                        updateSkillType(
+                          SkillType.photoshop,
+                        );
+                      },
+                    ),
+                    ItemSkills(
+                      imageAddress: 'assets/images/app_icon_02.png',
+                      skillName: 'Lightroom',
+                      shadowColor: Colors.indigo.shade800,
+                      isActive: _skillType == SkillType.lightroom,
+                      onTap: () {
+                        updateSkillType(
+                          SkillType.lightroom,
+                        );
+                      },
+                    ),
+                    ItemSkills(
+                      imageAddress: 'assets/images/app_icon_03.png',
+                      skillName: 'Aftereffect',
+                      shadowColor: Colors.indigo.shade900,
+                      isActive: _skillType == SkillType.aftereffect,
+                      onTap: () {
+                        updateSkillType(
+                          SkillType.aftereffect,
+                        );
+                      },
+                    ),
+                    ItemSkills(
+                      imageAddress: 'assets/images/app_icon_04.png',
+                      skillName: 'Illustrator',
+                      shadowColor: Colors.deepOrange.shade900,
+                      isActive: _skillType == SkillType.illustrator,
+                      onTap: () {
+                        updateSkillType(
+                          SkillType.illustrator,
+                        );
+                      },
+                    ),
+                    ItemSkills(
+                      imageAddress: 'assets/images/app_icon_05.png',
+                      skillName: 'Adobe XD',
+                      shadowColor: Colors.pink.shade400,
+                      isActive: _skillType == SkillType.adobeXD,
+                      onTap: () {
+                        updateSkillType(
+                          SkillType.adobeXD,
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              ),
+              const Divider(),
+              Padding(
+                padding: const EdgeInsets.only(left: 32, right: 32, bottom: 32),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      appLocalization.personalInformation,
+                      style: Theme.of(context).textTheme.bodyLarge,
+                    ),
+                    const SizedBox(height: 10),
+                    TextField(
+                      showCursor: showCursor,
+                      decoration: InputDecoration(
+                        labelText: appLocalization.email,
+                        prefixIcon: const Icon(
+                          Icons.alternate_email_sharp,
+                          size: 18,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    TextField(
+                      showCursor: showCursor,
+                      decoration: InputDecoration(
+                        labelText: appLocalization.password,
+                        prefixIcon: const Icon(
+                          Icons.password,
+                          size: 18,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 48,
+                      child: ElevatedButton(
+                        onPressed: () {},
+                        child: Text(
+                          appLocalization.save,
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class ItemSkills extends StatelessWidget {
+  final String imageAddress;
+  final String skillName;
+  final Color shadowColor;
+  final bool isActive;
+  final Function() onTap;
+
+  const ItemSkills({
+    super.key,
+    required this.imageAddress,
+    required this.skillName,
+    required this.shadowColor,
+    required this.isActive,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        width: 110,
+        height: 110,
+        decoration: isActive
+            ? BoxDecoration(
+                color: Colors.white.withOpacity(0.05),
+                borderRadius: BorderRadius.circular(12),
+              )
+            : null,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              decoration: isActive
+                  ? BoxDecoration(boxShadow: [
+                      BoxShadow(
+                        color: shadowColor,
+                        blurRadius: 20,
+                      ),
+                    ])
+                  : null,
+              child: Image.asset(
+                imageAddress,
+                width: 40,
+                height: 40,
+              ),
+            ),
+            const SizedBox(height: 8),
             Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
+              skillName,
+              style: Theme.of(context).textTheme.bodySmall!.copyWith(
+                    fontWeight: FontWeight.w900,
+                  ),
             ),
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
     );
   }
+}
+
+enum SkillType {
+  photoshop,
+  lightroom,
+  aftereffect,
+  illustrator,
+  adobeXD,
+}
+
+enum Language {
+  fa,
+  en,
 }

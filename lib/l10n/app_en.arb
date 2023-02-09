@@ -1,0 +1,15 @@
+{
+  "profileTitle": "Profile Screen",
+  "name": "Saman Dowlatabadi",
+  "job": "Student & Android Developer",
+  "location": "Paris, France",
+  "summary": "A computer engineering student, Interested in application programming and user interface design. In this direction, I try hard to present my best.",
+  "selectedLanguage": "Selected Language",
+  "enLanguage": "English",
+  "faLanguage": "Farsi",
+  "skills": "Skills",
+  "personalInformation": "Account Information",
+  "email": "Email",
+  "password": "Password",
+  "save": "Save"
+}
