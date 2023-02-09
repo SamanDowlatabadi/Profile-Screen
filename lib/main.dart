@@ -16,7 +16,7 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  bool themeMode = true;
+  bool _themeMode = true;
   Locale _locale = const Locale('en');
 
   @override
@@ -34,7 +34,7 @@ class _MyAppState extends State<MyApp> {
       ],
       locale: _locale,
       title: 'Flutter Demo',
-      theme: themeMode
+      theme: _themeMode
           ? MyConfigThemeData.dark().themeData(_locale.languageCode)
           : MyConfigThemeData.light().themeData(_locale.languageCode),
       home: ProfileScreen(selectedLanguageByUser: (Language newLanguageByUser) {
@@ -45,14 +45,12 @@ class _MyAppState extends State<MyApp> {
         });
       }, toggleTheme: () {
         setState(() {
-          themeMode = !themeMode;
+          _themeMode = !_themeMode;
         });
       }),
     );
   }
 }
-
-
 
 class ProfileScreen extends StatefulWidget {
   final Function() toggleTheme;
@@ -69,20 +67,20 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   SkillType _skillType = SkillType.photoshop;
-  bool isLiked = false;
+  bool _isLiked = false;
   Language _language = Language.en;
 
-  void updateSkillType(SkillType skill) {
+  void updateSkillType(SkillType skillSelected) {
     setState(() {
-      _skillType = skill;
+      _skillType = skillSelected;
     });
   }
 
-  void updateSelectedLanguage(Language language) {
-    widget.selectedLanguageByUser(language);
+  void updateSelectedLanguage(Language languageSelected) {
+    widget.selectedLanguageByUser(languageSelected);
     setState(() {
       {
-        _language = language;
+        _language = languageSelected;
       }
     });
   }
@@ -91,6 +89,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget build(BuildContext context) {
     AppLocalizations appLocalization = AppLocalizations.of(context)!;
     bool showCursor = false;
+    Color fillColorTextField = Theme.of(context).brightness==Brightness.dark?Colors.grey.shade700:Colors.grey.shade50;
     return GestureDetector(
       onTap: () {
         FocusScopeNode currentFocus = FocusScope.of(context);
@@ -174,11 +173,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       splashColor: Colors.transparent,
                       onPressed: () {
                         setState(() {
-                          isLiked = !isLiked;
+                          _isLiked = !_isLiked;
                         });
                       },
                       icon: Icon(
-                        isLiked
+                        _isLiked
                             ? CupertinoIcons.heart_fill
                             : CupertinoIcons.heart,
                         color: Colors.red.shade900,
@@ -320,7 +319,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     TextField(
                       showCursor: showCursor,
                       decoration: InputDecoration(
+                        fillColor: fillColorTextField,
                         labelText: appLocalization.email,
+                        labelStyle: TextStyle(color: Theme.of(context).primaryColor),
+                        prefixIconColor: Theme.of(context).primaryColor,
                         prefixIcon: const Icon(
                           Icons.alternate_email_sharp,
                           size: 18,
@@ -331,7 +333,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     TextField(
                       showCursor: showCursor,
                       decoration: InputDecoration(
+                        fillColor: fillColorTextField,
                         labelText: appLocalization.password,
+                        labelStyle: TextStyle(color: Theme.of(context).primaryColor),
+                        prefixIconColor: Theme.of(context).primaryColor,
                         prefixIcon: const Icon(
                           Icons.password,
                           size: 18,
